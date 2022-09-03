@@ -49,17 +49,16 @@
  *              ╚═════════════════════════════╝
  */
 
-#define REQUIRED VERSION(1, 5, 0)
+#define REQUIRED VERSION(1, 6, 0)
 
 #include "HomeSpan.h"
 #include "extras/Pixel.h" // include the HomeSpan Pixel class
 #include <WiFiClient.h>
 #include <WebServer.h>
 #include <ElegantOTA.h>
+#include "OTA.hpp"
 
 char sNumber[18] = "11:11:11:11:11:11";
-
-void addSwitch();
 
 ///////////////////////////////
 WebServer server(80);
@@ -92,6 +91,17 @@ void setup() {
 
 	Serial.begin(115200);
 
+	Serial.print("Active firmware version: ");
+	Serial.println(FirmwareVer);
+
+	String	   temp			  = FW_VERSION;
+	const char compile_date[] = __DATE__ " " __TIME__;
+	char	  *fw_ver		  = new char[temp.length() + 30];
+	strcpy(fw_ver, temp.c_str());
+	strcat(fw_ver, " (");
+	strcat(fw_ver, compile_date);
+	strcat(fw_ver, ")");
+
 	for (int i = 0; i < 17; ++i) // we will iterate through each character in WiFi.macAddress() and copy it to the global char sNumber[]
 	{
 		sNumber[i] = WiFi.macAddress()[i];
@@ -106,7 +116,8 @@ void setup() {
 	homeSpan.setControlPin(0);										// set the control pin to GPIO0
 	homeSpan.setPortNum(88);										// set the port number to 81
 	homeSpan.enableAutoStartAP();									// enable auto start of AP
-	homeSpan.enableWebLog(10, "pool.ntp.org", "UTC-3:00", "myLog"); // enable Web Log
+	homeSpan.enableWebLog(10, "pool.ntp.org", "UTC-2:00", "myLog"); // enable Web Log
+	homeSpan.setSketchVersion(fw_ver);
 
 	homeSpan.begin(Category::ProgrammableSwitches, "Switch");
 
@@ -116,7 +127,7 @@ void setup() {
 	new Characteristic::Manufacturer("HomeSpan");
 	new Characteristic::SerialNumber(sNumber);
 	new Characteristic::Model("Programmable Switch");
-	new Characteristic::FirmwareRevision("1.0");
+	new Characteristic::FirmwareRevision(temp.c_str());
 	new Characteristic::Identify();
 
 	new Service::HAPProtocolInformation();
@@ -130,6 +141,7 @@ void setup() {
 void loop() {
 	homeSpan.poll();
 	server.handleClient();
+	repeatedCall();
 }
 
 ///////////////////////////////
