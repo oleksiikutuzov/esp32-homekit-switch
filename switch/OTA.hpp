@@ -8,7 +8,7 @@
 #define URL_fw_Version "https://raw.githubusercontent.com/oleksiikutuzov/esp32-homekit-switch/main/bin_version.txt"
 #define URL_fw_Bin	   "https://raw.githubusercontent.com/oleksiikutuzov/esp32-homekit-switch/main/esp32_switch.bin"
 
-#define FW_VERSION	   "1.1.0"
+#define FW_VERSION	   "1.1.1"
 
 String FirmwareVer = {
 	FW_VERSION};
@@ -16,8 +16,8 @@ String FirmwareVer = {
 void firmwareUpdate();
 int	 FirmwareVersionCheck();
 
-unsigned long previousMillis = 0;		  // will store last time LED was updated
-const long	  interval		 = 60 * 1000; // 1 hour in ms
+unsigned long previousMillis = 0;			   // will store last time LED was updated
+const long	  interval		 = 60 * 60 * 1000; // 1 hour in ms
 
 void repeatedCall() {
 	static int	  num			= 0;
