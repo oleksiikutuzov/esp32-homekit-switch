@@ -49,11 +49,13 @@
  *              ╚═════════════════════════════╝
  */
 
-#define REQUIRED   VERSION(1, 7, 0)
-#define FW_VERSION "1.2.0"
+#define REQUIRED	VERSION(1, 7, 0)
+#define FW_VERSION	"1.3.0"
+
+#define CONTROL_PIN 0
+#define STATUS_PIN	32
 
 #include "HomeSpan.h"
-// #include "extras/Pixel.h" // include the HomeSpan Pixel class
 #include <ElegantOTA.h>
 #include <WebServer.h>
 #include <WiFiClient.h>
@@ -77,6 +79,8 @@ struct DEV_Switch : Service::Switch {
 		pinMode(ledPin, OUTPUT);
 
 		digitalWrite(ledPin, power->getVal());
+
+		new SpanButton(CONTROL_PIN);
 	}
 
 	// Override update method
@@ -84,6 +88,23 @@ struct DEV_Switch : Service::Switch {
 		digitalWrite(ledPin, power->getNewVal());
 
 		return (true);
+	}
+
+	void button(int pin, int pressType) override {
+
+		LOG1("Found button press on pin: "); // always a good idea to log messages
+		LOG1(pin);
+		LOG1("  type: ");
+		LOG1(pressType == SpanButton::LONG ? "LONG" : (pressType == SpanButton::SINGLE) ? "SINGLE"
+																						: "DOUBLE");
+		LOG1("\n");
+
+		if (pin == CONTROL_PIN) {
+			if (pressType == SpanButton::SINGLE) {	// if a SINGLE press of the power button...
+				power->setVal(1 - power->getVal()); // ...toggle the value of the power Characteristic
+				digitalWrite(ledPin, power->getVal());
+			}
+		}
 	}
 };
 
@@ -111,11 +132,11 @@ void setup() {
 	sNumber[17] = '\0'; // the last charater needs to be a null
 
 	homeSpan.setLogLevel(0);										// set log level to 0 (no logs)
-	homeSpan.setStatusPin(32);										// set the status pin to GPIO32
+	homeSpan.setStatusPin(STATUS_PIN);								// set the status pin to GPIO32
 	homeSpan.setStatusAutoOff(10);									// disable led after 10 seconds
 	homeSpan.setWifiCallback(setupWeb);								// Set the callback function for wifi events
 	homeSpan.reserveSocketConnections(5);							// reserve 5 socket connections for Web Server
-	homeSpan.setControlPin(0);										// set the control pin to GPIO0
+	homeSpan.setControlPin(CONTROL_PIN);							// set the control pin to GPIO0
 	homeSpan.setPortNum(88);										// set the port number to 81
 	homeSpan.enableAutoStartAP();									// enable auto start of AP
 	homeSpan.enableWebLog(10, "pool.ntp.org", "UTC-2:00", "myLog"); // enable Web Log
